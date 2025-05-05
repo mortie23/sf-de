@@ -1,30 +1,58 @@
 from dotenv import load_dotenv
 import os
 from sf_extract.salesforce_client import SalesforceClient, list_available_objects
+import click
+from rich.console import Console
+import csv
+from pathlib import Path
+
+load_dotenv()  # Load environment variables from .env file
+console = Console()
+
+# Retrieve Salesforce credentials from environment variables
+username = os.getenv("SALESFORCE_USERNAME")
+password = os.getenv("SALESFORCE_PASSWORD")
+security_token = os.getenv("SALESFORCE_SECURITY_TOKEN")
 
 
-def main():
-    load_dotenv()  # Load environment variables from .env file
+def get_csv_reader(csv_path: Path):
+    f = open(csv_path, newline="", encoding="utf-8")
+    return f, csv.DictReader(f)
 
-    # Retrieve Salesforce credentials from environment variables
-    username = os.getenv("SALESFORCE_USERNAME")
-    password = os.getenv("SALESFORCE_PASSWORD")
-    security_token = os.getenv("SALESFORCE_SECURITY_TOKEN")
+
+@click.command(context_settings=dict(help_option_names=["-h", "--help"]))
+@click.option(
+    "--query",
+    "-q",
+    type=str,
+    default="unit",
+    help="File with list of queries either all or unit",
+    show_default=True,
+)
+def main(query: str):
 
     # Initialize Salesforce client
     sf_client = SalesforceClient(username, password, security_token)
 
-    # Execute a sample SOQL query
-    query = "SELECT Id, Name FROM Contact WHERE Name LIKE '%Shane%'"
+    config_path = Path("conf")
 
-    results = sf_client.query(query)
+    # Read from the CSV configuration file
+    file, recon_queries = get_csv_reader(config_path / f"{query}.csv")
+    try:
+        # Loop over all queries from the configuration and execute against SalesForce
+        for recon_query in recon_queries:
+            sql_path = Path("sql") / recon_query["system_name"]
+            sql_filename = (
+                f"r-{str(recon_query["rule_id"])}-{str(recon_query["query_id"])}.sql"
+            )
+            query = (sql_path / sql_filename).read_text()
+            results = sf_client.query(query)
 
-    # Print the results (with error handling)
-    if results:
-        for record in results:
-            print(record)
-    else:
-        print("No results returned or query failed")
+            if results:
+                for record in results:
+                    print(record)
+    finally:
+        file.close()
 
 
 if __name__ == "__main__":
