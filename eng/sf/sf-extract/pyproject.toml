@@ -1,0 +1,24 @@
+[project]
+name = "sf-extract"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Christopher Mortimer",email = "christopher@mortimer.xyz"}
+]
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "simple-salesforce (>=1.12.6,<2.0.0)",
+    "python-dotenv (>=1.1.0,<2.0.0)"
+]
+
+[tool.poetry]
+packages = [{include = "sf_extract", from = "src"}]
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
