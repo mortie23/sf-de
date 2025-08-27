@@ -37,13 +37,13 @@ def main(query: str):
     config_path = Path("conf")
 
     # Read from the CSV configuration file
-    file, recon_queries = get_csv_reader(config_path / f"{query}.csv")
+    file, soql_queries = get_csv_reader(config_path / f"{query}.csv")
     try:
         # Loop over all queries from the configuration and execute against SalesForce
-        for recon_query in recon_queries:
-            sql_path = Path("sql") / recon_query["system_name"]
+        for soql_query in soql_queries:
+            sql_path = Path("sql") / soql_query["system_name"]
             sql_filename = (
-                f"r-{str(recon_query["rule_id"])}-{str(recon_query["query_id"])}.sql"
+                f"category-{str(soql_query["category_id"])}-{str(soql_query["query_id"])}.sql"
             )
             query = (sql_path / sql_filename).read_text()
             results = sf_client.query(query)
